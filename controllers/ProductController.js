@@ -1,5 +1,5 @@
 import Product from "../models/Product.js";
-
+import Review from "../models/Review.js";
 export const createProduct = async (req, res) => {
   try {
     const product = await Product.create(req.body);
@@ -19,13 +19,72 @@ export const createProduct = async (req, res) => {
 
 export const getProducts = async (req, res) => {
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
+    const {
+      search,
+      category,
+      minPrice,
+      maxPrice,
+    } = req.query;
+
+
+    // Pagination
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+
+    let filter = {};
+
+
+    // Search by product name
+    if (search) {
+      filter.name = {
+        $regex: search,
+        $options: "i",
+      };
+    }
+
+
+    // Filter by category ID
+    if (category) {
+      filter.category = category;
+    }
+
+
+    // Filter by price range
+    if (minPrice || maxPrice) {
+      filter.price = {};
+
+      if (minPrice) {
+        filter.price.$gte = Number(minPrice);
+      }
+
+      if (maxPrice) {
+        filter.price.$lte = Number(maxPrice);
+      }
+    }
+
+
+    const products = await Product.find(filter)
+      .populate("category", "name slug image")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+
+    const totalProducts = await Product.countDocuments(filter);
+
 
     return res.status(200).json({
       success: true,
-      count: products.length,
+      page,
+      limit,
+      totalProducts,
+      totalPages: Math.ceil(totalProducts / limit),
       products,
     });
+
+
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -36,7 +95,9 @@ export const getProducts = async (req, res) => {
 
 export const getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id)
+      .populate("category", "name slug image");
+
 
     if (!product) {
       return res.status(404).json({
@@ -45,10 +106,32 @@ export const getProductById = async (req, res) => {
       });
     }
 
+
+    const reviews = await Review.find({
+      product: product._id,
+    });
+
+
+    const reviewsCount = reviews.length;
+
+
+    const averageRating =
+      reviewsCount > 0
+        ? reviews.reduce(
+            (sum, review) => sum + review.rating,
+            0
+          ) / reviewsCount
+        : 0;
+
+
     return res.status(200).json({
       success: true,
       product,
+      rating: Number(averageRating.toFixed(1)),
+      reviewsCount,
     });
+
+
   } catch (error) {
     return res.status(500).json({
       success: false,

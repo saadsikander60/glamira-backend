@@ -1,14 +1,25 @@
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
-
+import Cart from "../models/Cart.js";
 export const createOrder = async (req, res) => {
   try {
-    const { items, paymentMethod, shippingAddress } = req.body;
+    const { paymentMethod, shippingAddress } = req.body;
 
-    let totalAmount = 0;
+    const cart = await Cart.findOne({
+      user: req.user._id,
+    });
+
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Cart is empty",
+      });
+    }
+
+    let itemsTotal = 0;
     const orderItems = [];
 
-    for (const item of items) {
+    for (const item of cart.items) {
       const product = await Product.findById(item.product);
 
       if (!product) {
@@ -25,7 +36,7 @@ export const createOrder = async (req, res) => {
         });
       }
 
-      totalAmount += product.price * item.quantity;
+      itemsTotal += product.price * item.quantity;
 
       orderItems.push({
         product: product._id,
@@ -35,25 +46,62 @@ export const createOrder = async (req, res) => {
       });
     }
 
+    // Delivery Charges
+    const customerCity = shippingAddress.city.toLowerCase();
+
+    let deliveryCharge;
+    let deliveryArea;
+
+    if (customerCity === "ajman") {
+      deliveryCharge = Number(process.env.AJMAN_DELIVERY_CHARGE);
+      deliveryArea = "AJMAN";
+    } else {
+      deliveryCharge = Number(process.env.OUTSIDE_DELIVERY_CHARGE);
+      deliveryArea = "OUTSIDE";
+    }
+
+    const totalAmount = itemsTotal + deliveryCharge;
+
     const order = await Order.create({
       user: req.user._id,
       items: orderItems,
+
+      itemsTotal,
+      deliveryCharge,
+      deliveryArea,
+
       totalAmount,
+      currency: process.env.CURRENCY,
+
       paymentMethod,
       shippingAddress,
     });
 
+
+    // Reduce Stock
     for (const item of orderItems) {
       await Product.findByIdAndUpdate(item.product, {
-        $inc: { stock: -item.quantity },
+        $inc: {
+          stock: -item.quantity,
+        },
       });
     }
+
+
+    // Empty Cart After Order
+    await Cart.findOneAndUpdate(
+      { user: req.user._id },
+      { items: [] }
+    );
+
 
     return res.status(201).json({
       success: true,
       message: "Order placed successfully",
       order,
     });
+
+
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -61,6 +109,7 @@ export const createOrder = async (req, res) => {
     });
   }
 };
+
 
 export const getMyOrders = async (req, res) => {
   try {
@@ -74,6 +123,7 @@ export const getMyOrders = async (req, res) => {
       success: true,
       orders,
     });
+
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -81,6 +131,7 @@ export const getMyOrders = async (req, res) => {
     });
   }
 };
+
 
 export const getAllOrders = async (req, res) => {
   try {
@@ -93,6 +144,7 @@ export const getAllOrders = async (req, res) => {
       success: true,
       orders,
     });
+
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -100,6 +152,7 @@ export const getAllOrders = async (req, res) => {
     });
   }
 };
+
 
 export const updateOrderStatus = async (req, res) => {
   try {
@@ -121,6 +174,7 @@ export const updateOrderStatus = async (req, res) => {
       message: "Order status updated",
       order,
     });
+
   } catch (error) {
     return res.status(500).json({
       success: false,

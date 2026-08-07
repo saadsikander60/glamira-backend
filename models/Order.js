@@ -15,12 +15,17 @@ const orderSchema = new mongoose.Schema(
           ref: "Product",
           required: true,
         },
-        name: String,
+
+        name: {
+          type: String,
+        },
+
         quantity: {
           type: Number,
           required: true,
           min: 1,
         },
+
         price: {
           type: Number,
           required: true,
@@ -28,14 +33,41 @@ const orderSchema = new mongoose.Schema(
       },
     ],
 
+    itemsTotal: {
+      type: Number,
+      required: true,
+    },
+
+    deliveryCharge: {
+      type: Number,
+      required: true,
+    },
+
+    deliveryArea: {
+      type: String,
+      enum: ["AJMAN", "OUTSIDE"],
+      required: true,
+    },
+
     totalAmount: {
       type: Number,
       required: true,
     },
 
+    currency: {
+      type: String,
+      default: "AED",
+    },
+
     status: {
       type: String,
-      enum: ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"],
+      enum: [
+        "PENDING",
+        "PROCESSING",
+        "SHIPPED",
+        "DELIVERED",
+        "CANCELLED",
+      ],
       default: "PENDING",
     },
 
@@ -51,11 +83,29 @@ const orderSchema = new mongoose.Schema(
     },
 
     shippingAddress: {
-      fullName: String,
-      phone: String,
-      address: String,
-      city: String,
-      postalCode: String,
+      fullName: {
+        type: String,
+        required: true,
+      },
+
+      phone: {
+        type: String,
+        required: true,
+      },
+
+      address: {
+        type: String,
+        required: true,
+      },
+
+      city: {
+        type: String,
+        required: true,
+      },
+
+      postalCode: {
+        type: String,
+      },
     },
   },
   {

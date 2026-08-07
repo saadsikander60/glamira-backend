@@ -21,15 +21,14 @@ app.use(cors());
 app.use(express.json());
 
 // API Routes
-app.use("/api/users", userRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/categories", categoryRoutes);
-app.use("/api/cart", cartRoutes);
-app.use("/api/orders", orderRoutes);
-app.use("/api/reviews", reviewRoutes);
-app.use("/api/addresses", addressRoutes);
-app.use("/api/contact", contactRoutes);
-
+app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/products", productRoutes);
+app.use("/api/v1/categories", categoryRoutes);
+app.use("/api/v1/cart", cartRoutes);
+app.use("/api/v1/orders", orderRoutes);
+app.use("/api/v1/reviews", reviewRoutes);
+app.use("/api/v1/addresses", addressRoutes);
+app.use("/api/v1/contact", contactRoutes);
 // Test Route
 app.get("/", (req, res) => {
   res.send("Glamira Essence API is running");
