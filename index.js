@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+import "dotenv/config";
 import connectDB from "./config/db.js";
 
 import userRoutes from "./routes/UserRoutes.js";
@@ -11,8 +11,8 @@ import orderRoutes from "./routes/OrderRoutes.js";
 import reviewRoutes from "./routes/ReviewRoutes.js";
 import addressRoutes from "./routes/AddressRoutes.js";
 import contactRoutes from "./routes/ContactRoutes.js";
+import dashboardRoutes from "./routes/DashboardRoutes.js";
 
-dotenv.config();
 connectDB();
 
 const app = express();
@@ -29,6 +29,11 @@ app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/reviews", reviewRoutes);
 app.use("/api/v1/addresses", addressRoutes);
 app.use("/api/v1/contact", contactRoutes);
+app.use(
+  "/api/v1/dashboard",
+  dashboardRoutes
+);
+
 // Test Route
 app.get("/", (req, res) => {
   res.send("Glamira Essence API is running");

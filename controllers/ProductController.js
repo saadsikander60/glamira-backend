@@ -1,14 +1,29 @@
 import Product from "../models/Product.js";
 import Review from "../models/Review.js";
+import deleteCloudinaryImage from "../utils/deleteCloudinary.js";
 export const createProduct = async (req, res) => {
   try {
-    const product = await Product.create(req.body);
+
+    const productData = {
+      ...req.body,
+    };
+
+
+    if (req.file) {
+      productData.image = req.file.path;
+    }
+
+
+    const product = await Product.create(productData);
+
 
     return res.status(201).json({
       success: true,
       message: "Product created successfully",
       product,
     });
+
+
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -142,23 +157,50 @@ export const getProductById = async (req, res) => {
 
 export const updateProduct = async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
 
-    if (!product) {
+    const existingProduct = await Product.findById(req.params.id);
+
+
+    if (!existingProduct) {
       return res.status(404).json({
         success: false,
         message: "Product not found",
       });
     }
 
+
+    const updateData = {
+      ...req.body,
+    };
+
+
+    if (req.file) {
+
+      if (existingProduct.image) {
+        await deleteCloudinaryImage(existingProduct.image);
+      }
+
+      updateData.image = req.file.path;
+    }
+
+
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+
     return res.status(200).json({
       success: true,
       message: "Product updated successfully",
       product,
     });
+
+
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -169,7 +211,9 @@ export const updateProduct = async (req, res) => {
 
 export const deleteProduct = async (req, res) => {
   try {
-    const product = await Product.findByIdAndDelete(req.params.id);
+
+    const product = await Product.findById(req.params.id);
+
 
     if (!product) {
       return res.status(404).json({
@@ -178,10 +222,21 @@ export const deleteProduct = async (req, res) => {
       });
     }
 
+
+    if (product.image) {
+      await deleteCloudinaryImage(product.image);
+    }
+
+
+    await Product.findByIdAndDelete(req.params.id);
+
+
     return res.status(200).json({
       success: true,
       message: "Product deleted successfully",
     });
+
+
   } catch (error) {
     return res.status(500).json({
       success: false,

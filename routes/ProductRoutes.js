@@ -1,4 +1,5 @@
 import express from "express";
+import upload from "../middleware/upload.js";
 import {
   createProduct,
   getProducts,
@@ -25,7 +26,7 @@ router.post(
   "/",
   auth,
   admin,
-  validate(createProductSchema),
+  upload.single("image"),
   createProduct
 );
 
@@ -33,7 +34,7 @@ router.put(
   "/:id",
   auth,
   admin,
-  validate(updateProductSchema),
+  upload.single("image"),
   updateProduct
 );
 
