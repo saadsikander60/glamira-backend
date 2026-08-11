@@ -29,16 +29,13 @@ app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/reviews", reviewRoutes);
 app.use("/api/v1/addresses", addressRoutes);
 app.use("/api/v1/contact", contactRoutes);
-app.use(
-  "/api/v1/dashboard",
-  dashboardRoutes
-);
+app.use("/api/v1/dashboard", dashboardRoutes);
 
 // Test Route
 app.get("/", (req, res) => {
   res.send("Glamira Essence API is running");
 });
 
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
+app.listen(process.env.PORT || 5000, () => {
+  console.log(`Server running on port ${process.env.PORT || 5000}`);
 });
