@@ -174,7 +174,35 @@ export const getDashboardStats = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(5);
 
+    const lowStockProducts = await Product.find({
+      stock: { $lte: 5 },
+    })
+      .select("name stock image price")
+      .sort({ stock: 1 })
+      .limit(8);
 
+    const ordersByStatusRaw = await Order.aggregate([
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const ordersByStatus = {
+      PENDING: 0,
+      PROCESSING: 0,
+      SHIPPED: 0,
+      DELIVERED: 0,
+      CANCELLED: 0,
+    };
+
+    ordersByStatusRaw.forEach((item) => {
+      if (item._id && Object.prototype.hasOwnProperty.call(ordersByStatus, item._id)) {
+        ordersByStatus[item._id] = item.count;
+      }
+    });
 
     return res.status(200).json({
 
@@ -206,6 +234,10 @@ export const getDashboardStats = async (req, res) => {
       monthlySalesChart,
 
       recentOrders,
+
+      lowStockProducts,
+
+      ordersByStatus,
 
     });
 

@@ -8,6 +8,14 @@ export const createProduct = async (req, res) => {
       ...req.body,
     };
 
+    if (productData.price !== undefined) {
+      productData.price = Number(productData.price);
+    }
+
+    if (productData.stock !== undefined && productData.stock !== "") {
+      productData.stock = Number(productData.stock);
+    }
+
     if (req.file) {
       productData.image = req.file.path;
     }
@@ -158,6 +166,14 @@ export const updateProduct = async (req, res) => {
     const updateData = {
       ...req.body,
     };
+
+    if (updateData.price !== undefined && updateData.price !== "") {
+      updateData.price = Number(updateData.price);
+    }
+
+    if (updateData.stock !== undefined && updateData.stock !== "") {
+      updateData.stock = Number(updateData.stock);
+    }
 
     if (req.file) {
       if (existingProduct.image) {

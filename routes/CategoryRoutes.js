@@ -1,4 +1,5 @@
 import express from "express";
+import upload from "../middleware/upload.js";
 import {
   createCategory,
   getCategories,
@@ -8,32 +9,14 @@ import {
 
 import auth from "../middleware/auth.js";
 import admin from "../middleware/admin.js";
-import validate from "../middleware/validate.js";
-
-import {
-  createCategorySchema,
-  updateCategorySchema,
-} from "../validations/CategoryValidation.js";
 
 const router = express.Router();
 
 router.get("/", getCategories);
 
-router.post(
-  "/",
-  auth,
-  admin,
-  validate(createCategorySchema),
-  createCategory
-);
+router.post("/", auth, admin, upload.single("image"), createCategory);
 
-router.put(
-  "/:id",
-  auth,
-  admin,
-  validate(updateCategorySchema),
-  updateCategory
-);
+router.put("/:id", auth, admin, upload.single("image"), updateCategory);
 
 router.delete("/:id", auth, admin, deleteCategory);
 

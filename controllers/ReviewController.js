@@ -83,12 +83,57 @@ export const updateReview = async (req, res) => {
   }
 };
 
+export const getAllReviews = async (req, res) => {
+  try {
+    const reviews = await Review.find()
+      .populate("user", "name email")
+      .populate("product", "name image")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      reviews,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const getMyReviews = async (req, res) => {
+  try {
+    const reviews = await Review.find({
+      user: req.user._id,
+    })
+      .populate("product", "name image")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      reviews,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 export const deleteReview = async (req, res) => {
   try {
-    const review = await Review.findOneAndDelete({
-      _id: req.params.id,
-      user: req.user._id,
-    });
+    let review;
+
+    if (req.user.role === "ADMIN") {
+      review = await Review.findByIdAndDelete(req.params.id);
+    } else {
+      review = await Review.findOneAndDelete({
+        _id: req.params.id,
+        user: req.user._id,
+      });
+    }
 
     if (!review) {
       return res.status(404).json({

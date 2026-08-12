@@ -132,6 +132,46 @@ export const getMyOrders = async (req, res) => {
   }
 };
 
+export const getOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate("items.product")
+      .populate("user", "name email");
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    const ownerId =
+      order.user && typeof order.user === "object" && order.user._id
+        ? order.user._id.toString()
+        : order.user?.toString();
+
+    const isOwner = ownerId === req.user._id.toString();
+    const isAdminUser = req.user.role === "ADMIN";
+
+    if (!isOwner && !isAdminUser) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not allowed to view this order",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      order,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 
 export const getAllOrders = async (req, res) => {
   try {
